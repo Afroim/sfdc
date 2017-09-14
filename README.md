@@ -1,30 +1,5 @@
-This Google Apps script export test data coverage from a salesforce org in the active Spreadsheet. 
-In order to use this script you need to create a Connection Apps in your Salesforce Org.
-(for details please https://developer.salesforce.com/page/Digging_Deeper_into_OAuth_2.0_on_Force.com).
-As a Callback Url in your Connection Apps setting specify please https://script.google.com/macros/d/
-The citations from GNU license:
+This Google Apps script exports test data coverage from a salesforce org in the active Spreadsheet. The script is intended to help SFDC developers to get the full state of test coverage of the programming code in current developer org. In order to use this script you need to create a Connection Apps in your Salesforce Org (for details please see https://developer.salesforce.com/page/Digging_Deeper_into_OAuth_2.0_on_Force.com).
+As Callback Url in your Connection Apps setting in your salesforce org please specify https://script.google.com/macros/d/.
+The script was developed by Efraim Fligil (senior technical consultant at Salesforce) as an open source application.
 
-  15. Disclaimer of Warranty.
-
-  THERE IS NO WARRANTY FOR THE PROGRAM, TO THE EXTENT PERMITTED BY
-APPLICABLE LAW.  EXCEPT WHEN OTHERWISE STATED IN WRITING THE COPYRIGHT
-HOLDERS AND/OR OTHER PARTIES PROVIDE THE PROGRAM "AS IS" WITHOUT WARRANTY
-OF ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO,
-THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-PURPOSE.  THE ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE PROGRAM
-IS WITH YOU.  SHOULD THE PROGRAM PROVE DEFECTIVE, YOU ASSUME THE COST OF
-ALL NECESSARY SERVICING, REPAIR OR CORRECTION.
-
-  16. Limitation of Liability.
-
-  IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING
-WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MODIFIES AND/OR CONVEYS
-THE PROGRAM AS PERMITTED ABOVE, BE LIABLE TO YOU FOR DAMAGES, INCLUDING ANY
-GENERAL, SPECIAL, INCIDENTAL OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE
-USE OR INABILITY TO USE THE PROGRAM (INCLUDING BUT NOT LIMITED TO LOSS OF
-DATA OR DATA BEING RENDERED INACCURATE OR LOSSES SUSTAINED BY YOU OR THIRD
-PARTIES OR A FAILURE OF THE PROGRAM TO OPERATE WITH ANY OTHER PROGRAMS),
-EVEN IF SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF
-SUCH DAMAGES.
-
-  17. Interpretation of Sections 15 and 16.
+USING THIS SCRIPT YOU ACT ON YOUR OWN FLOCK AND RISK. THE AUTHOR DOES NOT BEAR ANY RESPONSIBILITY FOR POSSIBLE DAMAGE IN ACCORDANCE WITH THE GNU LICENSE ATTACHED.
