@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html>
+
+<body>
+
+<div class="form-group" id="div001">
+
+<div class="control-group" id="button-bar"></div>
+
+<div class="loader-layer" style="display:none">
+     
+		<div id="floatingCirclesG">
+			<div class="f_circleG" id="frotateG_01"></div>
+			<div class="f_circleG" id="frotateG_02"></div>
+			<div class="f_circleG" id="frotateG_03"></div>
+			<div class="f_circleG" id="frotateG_04"></div>
+			<div class="f_circleG" id="frotateG_05"></div>
+			<div class="f_circleG" id="frotateG_06"></div>
+			<div class="f_circleG" id="frotateG_07"></div>
+			<div class="f_circleG" id="frotateG_08"></div>
+		</div>     
+</div>
+
+  <label for="dataType" class="control-label required">Data Type</label>
+  <select  class="form-control" name="dataType" id="dataType">
+    <option value="class" label="Apex Classes" />
+    <option value="trigger" label="Apex Triggers" />
+    <option value="all" label="Apex Classes and Triggers" />
+  </select>
+  
+  <label for="topLeft" class="control-label required">Top left range of the data table</label>
+  <input type="text" name="topLeft" class="form-control" id="topLeft">
+  
+  <div style="width: 100%;" class="checkbox-holder">
+    <label for="addOrgWideCoverage" class="control-label">Add Org Wide Coverage</label>
+    <br />
+    <input type="checkbox" name="addOrgWideCoverage" class="" id="addOrgWideCoverage">
+  </div>
+  
+  <div style="width: 100%;" class="checkbox-holder">
+    <label for="addHeader" class="control-label">Add header for result data table</label>
+    <br />
+    <input type="checkbox" name="addHeader" class="" id="addHeader">
+  </div>
+ 
+  <button type="button" id="btn-submit" class="btn btn-primary btn-msg">Run Process Export</button>
+   &nbsp;&nbsp;&nbsp;&nbsp;
+  <button type="button" id="btn-clear" class="btn btn-msg">Remove Credential</button>
+  
+
+</div>
+</body>
+<head>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+<script>
+
+$(function(){
+   initDialog(); 
+   $("#btn-submit").click(submitClick); 
+   $("#btn-clear").click(clearClick);
+});
+
+function clearClick(event, item) {
+  $("#msg").remove();
+  $('.loader-layer').show();
+  
+  google.script.run
+        .withSuccessHandler(
+              function(data, element) {
+                  if(data) {
+                    Object.keys(data).forEach(function(key){
+                    
+                      $("#" + key).val("");
+                    
+                    });
+                    $('.loader-layer').hide();
+                    openAuthenticationDialog();
+                  }
+              })
+        .withFailureHandler(
+              function(msg, element) {
+                 $('.loader-layer').hide();
+                 showError(msg, $('#button-bar'));
+              })
+        .withUserObject(this)
+        .clearCache();
+
+}
+
+function initDialog() {
+
+  google.script.run
+        .withSuccessHandler(
+              function(data, element) {
+                  //console.log("data >>",data);
+                  $("#dataType").val(data && data.dataType ? data.dataType : "class");
+                  $("#topLeft").val(data && data.topLeft ? data.topLeft : "B1");
+                  $('#addOrgWideCoverage').prop('checked', data && data.addOrgWideCoverage ? data.addOrgWideCoverage : false);
+                  $('#addHeader').prop('checked', data && data.headerHeight ? true : false);
+                                    
+              })
+        .withFailureHandler(
+              function(msg, element) {
+                 showError(msg, $('#button-bar'));
+              })
+        .withUserObject(this)
+        .getScriptRunSetting();
+
+}
+
+function submitClick(event, item) {
+
+  $("#msg").remove();
+  
+  var dataType = $('#dataType').val();
+  var topLeft  = $('#topLeft').val();
+  
+  var addOrgWideCoverage = $('#addOrgWideCoverage').prop('checked');
+  var addHeader          = $('#addHeader').prop('checked');
+  
+  
+  if(!dataType) {
+     showError(' Please enter Data Type.', $('#button-bar'));
+     return;
+  }
+  
+  if(!topLeft) {
+     showError(' Please enter a top left range of the data table.', $('#button-bar')); 
+     return;
+  }
+  
+  $('.loader-layer').show();
+
+  google.script.run
+        .withSuccessHandler(
+              function(data, element) {
+                  $('.loader-layer').hide();
+                  showInfo($("#button-bar"));
+              })
+        .withFailureHandler(
+              function(msg, element) {
+                 if(msg.message && (msg.message.search("INVALID_SESSION_ID") >= 0 || msg.message.search("DNS error") >= 0 )) {
+                   console.error(msg);
+                   openAuthenticationDialog();
+                 }
+                 else {
+                   $('.loader-layer').hide();
+                   showError(msg, $('#button-bar'));
+                 }
+                 
+              })
+        .withUserObject(this)
+        .exportAllApexEntities(dataType, topLeft, addOrgWideCoverage, addHeader);
+}
+
+function showInfo(element) {
+
+   var div = $('<div id="msg" class="alert alert-success"><strong>Success!</strong></div>');
+   $(element).after(div);
+}
+function showError(msg, element) {
+
+   var div = $('<div id="msg" class="alert alert-danger"><strong>Danger!</strong> ' + msg + '</div>');
+   $(element).after(div);
+}
+
+function openAuthenticationDialog() {
+  google.script.run
+        .withSuccessHandler(
+              function(data, element) {
+                  console.info("open the authentication dialog");
+                  google.script.host.close();
+              })
+        .authenticationDialog();
+}
+
+</script>
+
+<base target="_top">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+<?!= include('DialogStyle'); ?>
+</head>
+<html>
