@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+
+<body>
+
+<div class="form-group" id="div001">
+
+<div class="control-group" id="button-bar"></div>
+
+<div class="loader-layer" style="display:none">
+     
+		<div id="floatingCirclesG">
+			<div class="f_circleG" id="frotateG_01"></div>
+			<div class="f_circleG" id="frotateG_02"></div>
+			<div class="f_circleG" id="frotateG_03"></div>
+			<div class="f_circleG" id="frotateG_04"></div>
+			<div class="f_circleG" id="frotateG_05"></div>
+			<div class="f_circleG" id="frotateG_06"></div>
+			<div class="f_circleG" id="frotateG_07"></div>
+			<div class="f_circleG" id="frotateG_08"></div>
+		</div>     
+</div>
+
+
+  <label for="username" class="control-label required">SFDC User Name</label>
+  <input type="text" class="form-control" id="username" name="username">
+  
+  <label for="password" class="control-label required">SFDC Password and Security token ( if needs )</label>
+  <input type="password" class="form-control" id="password" name="password">
+  
+  <label for="client_id" class="control-label required">Client ID</label>
+  <input type="text" name="client_id" class="form-control" id="client_id">
+  
+  <label for="client_secret" class="control-label required">Client Secret</label>
+  <input type="password" name="client_secret" class="form-control" id="client_secret">
+  
+  <label for="orgType" class="control-label required">Org Type</label>
+  <select  class="form-control" name="org-type" id="orgType">
+    <option value="login" label="Developer Edition" />
+    <option value="test" label="Sandbox" />
+  </select>
+  
+  <div style="width: 100%;" class="checkbox-holder">
+    <label for="savePassword" class="control-label">Save password</label>
+    <br />
+    <input type="checkbox" name="savePassword" class="" id="savePassword">
+  </div>
+
+  <button type="button" id="btn-submit" class="btn btn-primary btn-msg">Connect to the org</button>
+  &nbsp;&nbsp;&nbsp;&nbsp;
+  <button type="button" id="btn-clear" class="btn btn-msg">Remove Credential</button>
+
+</div>
+</body>
+<head>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+<script>
+
+$(function(){
+   initDialog();
+   $("#btn-submit").click(submitClick);
+   $("#btn-clear").click(clearClick);
+});
+
+function clearClick(event, item) {
+
+  google.script.run
+        .withSuccessHandler(
+              function(data, element) {
+                  if(data) {
+                    Object.keys(data).forEach(function(key){
+                    
+                      $("#" + key).val("");
+                    
+                    });
+                  }
+              })
+        .withFailureHandler(
+              function(msg, element) {
+                 showError(msg, $('#button-bar'));
+              })
+        .withUserObject(this)
+        .clearCache();
+
+}
+
+function initDialog() {
+
+  google.script.run
+        .withSuccessHandler(
+              function(data, element) {
+                  if(data) {
+                    Object.keys(data).forEach(function(key){
+                    
+                      $("#" + key).val(data[key]);
+                    
+                    });
+                  }
+              })
+        .withFailureHandler(
+              function(msg, element) {
+                 showError(msg, $('#button-bar'));
+              })
+        .withUserObject(this)
+        .getCredential();
+
+}
+
+function submitClick(event, item) {
+
+  $("#msg").remove();
+  
+  var username = $('input[name=username]').val();
+  var password = $('input[name=password]').val();
+  var client_id = $('input[name=client_id]').val();
+  var client_secret = $('input[name=client_secret]').val();
+  var orgType = $('#orgType').val();
+  var savePwd = $('#savePassword').prop('checked');
+  
+  if(!username) {
+     showError(' Please enter SFDC User Name.', $('#button-bar'));
+     return;
+  }
+  
+  if(!password) {
+     showError(' Please enter SFDC User Password.', $('#button-bar')); 
+     return;
+  }
+  
+  if(!client_id) {
+     showError(' Please enter Consumer Key of Connected App.', $('#button-bar')); 
+     return;
+  }
+  
+  if(!client_secret) {
+     showError(' Please enter Consumer Secret of Connected App .', $('#button-bar')); 
+     return;
+  }
+  
+  $('.loader-layer').show();
+
+  google.script.run
+        .withSuccessHandler(
+              function(page, element) {
+                  $('.loader-layer').hide();
+                  //showInfo($("#button-bar"));
+                  google.script.host.close();
+              })
+        .withFailureHandler(
+              function(msg, element) {
+                 $('.loader-layer').hide();
+                 showError(msg, $('#button-bar'));
+              })
+        .withUserObject(this)
+        .testConnectionAndSaveCredential(username, password, client_id, client_secret, orgType, savePwd);
+}
+
+function showInfo(element) {
+
+   var div = $('<div id="msg" class="alert alert-success"><strong>Success!</strong></div>');
+   $(element).after(div);
+}
+function showError(msg, element) {
+
+   var div = $('<div id="msg" class="alert alert-danger"><strong>Danger!</strong> ' + msg + '</div>');
+   $(element).after(div);
+}
+
+</script>
+<head>
+<base target="_top">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+<?!= include('DialogStyle'); ?>
+</head>
+<html>
