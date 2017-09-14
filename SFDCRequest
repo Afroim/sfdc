@@ -9,10 +9,7 @@ function getOrgWideCoverage() {
   var query = "SELECT PercentCovered FROM ApexOrgWideCoverage Name LIMIT 1";
   var result = performQuery(query, toolingOption.option, toolingOption.baseUrl);
   
-  //Logger.log(result);
-  
   return [["Org Wide Coverage", "", "", "", "",  JSON.parse(result).records[0].PercentCovered / 100]];
-  
 }
 
 function getCoverageForAllClasses() {
@@ -38,9 +35,6 @@ function getCoverageForAllClasses() {
                            ];
                        });
     
-    //Logger.log("------  Code Coverage -------");
-    //Logger.log(coverageList); 
-  
   return { toContinue : true, records : coverageList};
 }
 
@@ -52,7 +46,6 @@ function getCoverageForAllTriggers() {
   
   var query = "SELECT ApexClassOrTrigger.Name, NumLinesCovered, NumLinesUncovered FROM ApexCodeCoverageAggregate";
   query += " WHERE ApexClassOrTriggerId IN (SELECT Id FROM ApexTrigger WHERE IsValid = true AND Status = 'Active') ORDER BY ApexClassOrTrigger.Name";
-  //Logger.log("class >> " + query); 
   var result = performQuery(query, toolingOption.option, toolingOption.baseUrl);
   
   var coverageList = JSON.parse(result)
@@ -68,9 +61,6 @@ function getCoverageForAllTriggers() {
                            ];
                        });
     
-    //Logger.log("------  Code Coverage -------");
-    //Logger.log(coverageList); 
-  
   return { toContinue : true, records : coverageList};
   
 }
@@ -105,35 +95,10 @@ function getParamsForToolingAPI () {
   
 }
 
-function getParamsForToolingAPI_hard () {
-  
-  var scriptProperties = PropertiesService.getScriptProperties();
-  var credentialJson = scriptProperties.getProperty("credential");
-  var credential = credentialJson ? JSON.parse(credentialJson) : {};
-  
-  var connector = sfdcAuth(credential);
-  var option = {
-      "method"   : "get",
-      "headers"  : { "Authorization": "Bearer " + connector.access_token },
-      "escaping" : false 
-  };
-  
-  var baseUrl = connector.instance_url + '/services/data/v40.0/tooling/query?q=';
-  
-  return {
-    option : option,
-    baseUrl: baseUrl
-  };
-  
-}
-
-
-
 /*
   salesforce authentication
 */
 function sfdcAuth(credential){
-  //create request params : "grant_type=password" +"&client_id="+ client_id + "&client_secret=" + client_secret + "&username=" + sfdcUsername + "&password="+sfdcPwd + sfdcSecToken;
   credential.grant_type = "password";
   var params = Object.keys(credential).filter(function(key){ return key != "orgType"}).map(function(item){
   
@@ -142,7 +107,6 @@ function sfdcAuth(credential){
   }).join('&');
   //Endpoint + params
   var authURL = "https://" + credential.orgType + ".salesforce.com/services/oauth2/token?" + params;
-  //Logger.log("authURL >>" + authURL);
   
   var results = UrlFetchApp.fetch(authURL, {"method" : "post"});
   var json = results.getContentText();
