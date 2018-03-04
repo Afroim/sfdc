@@ -4,7 +4,7 @@
 function getOrgWideCoverage() {
   
   var setting = getCoverageScriptRunSetting();
-  var toolingOption = getParamsForToolingAPI();
+  var toolingOption = getParamsForToolingAPI("query");
   
   var query = "SELECT PercentCovered FROM ApexOrgWideCoverage Name LIMIT 1";
   var result = performQuery(query, toolingOption.option, toolingOption.baseUrl);
@@ -13,26 +13,53 @@ function getOrgWideCoverage() {
 }
 
 function getCoverageForAllClasses() {
-
+  
+  
   var setting = getCoverageScriptRunSetting();
-  var toolingOption = getParamsForToolingAPI();
   
-  var query = "SELECT ApexClassOrTrigger.Name, NumLinesCovered, NumLinesUncovered FROM ApexCodeCoverageAggregate";
-  query += " WHERE ApexClassOrTriggerId IN (SELECT Id FROM ApexClass WHERE ManageableState = 'unmanaged') ORDER BY ApexClassOrTrigger.Name";//LIMIT 20 OFFSET 20
-  //Logger.log("class >> " + query); 
-  var result = performQuery(query, toolingOption.option, toolingOption.baseUrl);
+  var searchToolingOption = getParamsForToolingAPI_test("search");
+  var searchQuery = "FIND {@isTest} IN ALL FIELDS RETURNING ApexClass(Id, Name)";
   
-  var coverageList = JSON.parse(result)
-                       .records.map(function(item) {
+  var searchResult = performQuery(searchQuery, searchToolingOption.option, searchToolingOption.baseUrl);
+  var testIdList = JSON.parse(searchResult).searchRecords.map(function(item){  return item.Id;  });
+  
+  var toolingOption = getParamsForToolingAPI_test("query");
+  
+  var query1 = "SELECT Id, Name, CreatedBy.Name, LastModifiedBy.Name FROM ApexClass WHERE ManageableState = 'unmanaged'";
+  var queryResult1 = performQuery(query1, toolingOption.option, toolingOption.baseUrl);
+  
+  var notTestClassList = JSON.parse(queryResult1)
+      .records
+      .filter(function(it) { return testIdList.indexOf(it.Id) < 0; } )
+      .reduce(function(accumulator ,item){
+        
+           accumulator[item.Id] = { Name : item.Name, CreatedBy : item.CreatedBy.Name, LastModifiedBy : item.LastModifiedBy.Name };
+           return accumulator;
+                                       
+      }, {}); 
+  
+  var query2 = "SELECT ApexClassOrTriggerId, ApexClassOrTrigger.Name, NumLinesCovered, NumLinesUncovered FROM ApexCodeCoverageAggregate";
+  query2 += " WHERE ApexClassOrTriggerId IN (SELECT Id FROM ApexClass WHERE ManageableState = 'unmanaged') ORDER BY ApexClassOrTrigger.Name";
+  var queryResult2 = performQuery(query2, toolingOption.option, toolingOption.baseUrl);
+  
+  var coverageList = JSON.parse(queryResult2)
+                         .records
+                         .filter(function(it){ return testIdList.indexOf(it.ApexClassOrTriggerId) < 0; })
+                         .map(function(item) {
+                         
                            var total = item.NumLinesCovered + item.NumLinesUncovered;
+                           var classInfo = notTestClassList[item.ApexClassOrTriggerId];
+                         
                            return [
                              item.ApexClassOrTrigger.Name,
                              "Class",
                              item.NumLinesCovered,
                              item.NumLinesUncovered,
                              total,
-                             total ? (item.NumLinesCovered / total) : 0
-                           ];
+                             total ? (item.NumLinesCovered / total) : 0,
+                             classInfo.CreatedBy,
+                             classInfo.LastModifiedBy
+                          ];
                        });
     
   return { toContinue : true, records : coverageList};
@@ -42,22 +69,38 @@ function getCoverageForAllClasses() {
 function getCoverageForAllTriggers() {
 
   var setting = getCoverageScriptRunSetting();
-  var toolingOption = getParamsForToolingAPI();
+  var toolingOption = getParamsForToolingAPI("query");
   
-  var query = "SELECT ApexClassOrTrigger.Name, NumLinesCovered, NumLinesUncovered FROM ApexCodeCoverageAggregate";
-  query += " WHERE ApexClassOrTriggerId IN (SELECT Id FROM ApexTrigger WHERE IsValid = true AND Status = 'Active') ORDER BY ApexClassOrTrigger.Name";
-  var result = performQuery(query, toolingOption.option, toolingOption.baseUrl);
+  var query1 = "SELECT Id, Name, CreatedBy.Name, LastModifiedBy.Name FROM ApexTrigger WHERE IsValid = true AND Status = 'Active'";
+  var result1 = performQuery(query1, toolingOption.option, toolingOption.baseUrl);
   
-  var coverageList = JSON.parse(result)
+  var triggerInfoList = JSON.parse(result1)
+                            .records
+                            .reduce(function(accumulator, item){
+                              
+                                 accumulator[item.Id] = { Name : item.Name, CreatedBy : item.CreatedBy.Name, LastModifiedBy : item.LastModifiedBy.Name };
+                                 return accumulator;
+                                                             
+                             }, {}); 
+                        
+  var query2 = "SELECT ApexClassOrTriggerId, ApexClassOrTrigger.Name, NumLinesCovered, NumLinesUncovered FROM ApexCodeCoverageAggregate";
+  query2 += " WHERE ApexClassOrTriggerId IN (SELECT Id FROM ApexTrigger WHERE IsValid = true AND Status = 'Active') ORDER BY ApexClassOrTrigger.Name";
+  var result2 = performQuery(query2, toolingOption.option, toolingOption.baseUrl);
+  
+  var coverageList = JSON.parse(result2)
                        .records.map(function(item) {
                            var total = item.NumLinesCovered + item.NumLinesUncovered;
+                           var triggerInfo = triggerInfoList[item.ApexClassOrTriggerId];
+                                                             
                            return [
                              item.ApexClassOrTrigger.Name,
                              "Trigger",
                              item.NumLinesCovered,
                              item.NumLinesUncovered,
                              total,
-                             total ? (item.NumLinesCovered / total) : 0
+                             total ? (item.NumLinesCovered / total) : 0,
+                             triggerInfo.CreatedBy,
+                             triggerInfo.LastModifiedBy
                            ];
                        });
     
@@ -77,7 +120,7 @@ function performQuery(query, option, baseUrl) {
 /*
    Get Params for Tooling API
 */
-function getParamsForToolingAPI () {
+function getParamsForToolingAPI(queryKey) {
   
   var connector = getConnectorFromCache();
   var option = {
@@ -86,7 +129,9 @@ function getParamsForToolingAPI () {
       "escaping" : false 
   };
   
-  var baseUrl = connector.instance_url + '/services/data/v40.0/tooling/query?q=';
+  //var baseUrl = connector.instance_url + '/services/data/v40.0/tooling/query?q=';
+  
+  var baseUrl = connector.instance_url + "/services/data/v40.0/tooling/" + queryKey + "?q=";
   
   return {
     option : option,
