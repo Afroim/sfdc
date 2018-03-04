@@ -1,6 +1,6 @@
 function addTableHeader(sheet, topLeft, type) {
   
-  addRecordsToSheet(sheet, [["Entity Name", "Type", "Covered Lines", "Uncovered Lines", "Total Lines", "Test Coverage"]], topLeft, 0);
+  addRecordsToSheet(sheet, [["Entity Name", "Type", "Covered Lines", "Uncovered Lines", "Total Lines", "Test Coverage", "CreatedBy", "LastModifiedBy"]], topLeft, 0);
 }
 
 function addRecordsToSheet(sheet, records, topLeft, offset) {
