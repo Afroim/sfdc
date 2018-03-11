@@ -17,13 +17,13 @@ function getCoverageForAllClasses() {
   
   var setting = getCoverageScriptRunSetting();
   
-  var searchToolingOption = getParamsForToolingAPI_test("search");
+  var searchToolingOption = getParamsForToolingAPI("search");
   var searchQuery = "FIND {@isTest} IN ALL FIELDS RETURNING ApexClass(Id, Name)";
   
   var searchResult = performQuery(searchQuery, searchToolingOption.option, searchToolingOption.baseUrl);
   var testIdList = JSON.parse(searchResult).searchRecords.map(function(item){  return item.Id;  });
   
-  var toolingOption = getParamsForToolingAPI_test("query");
+  var toolingOption = getParamsForToolingAPI("query");
   
   var query1 = "SELECT Id, Name, CreatedBy.Name, LastModifiedBy.Name FROM ApexClass WHERE ManageableState = 'unmanaged'";
   var queryResult1 = performQuery(query1, toolingOption.option, toolingOption.baseUrl);
