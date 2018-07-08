@@ -17,13 +17,13 @@ function getCoverageForAllClasses() {
   
   var setting = getCoverageScriptRunSetting();
   
-  var searchToolingOption = getParamsForToolingAPI("search");
+  var searchToolingOption = getParamsForToolingAPI_test("search");
   var searchQuery = "FIND {@isTest} IN ALL FIELDS RETURNING ApexClass(Id, Name)";
   
   var searchResult = performQuery(searchQuery, searchToolingOption.option, searchToolingOption.baseUrl);
   var testIdList = JSON.parse(searchResult).searchRecords.map(function(item){  return item.Id;  });
   
-  var toolingOption = getParamsForToolingAPI("query");
+  var toolingOption = getParamsForToolingAPI_test("query");
   
   var query1 = "SELECT Id, Name, CreatedBy.Name, LastModifiedBy.Name FROM ApexClass WHERE ManageableState = 'unmanaged'";
   var queryResult1 = performQuery(query1, toolingOption.option, toolingOption.baseUrl);
@@ -42,10 +42,10 @@ function getCoverageForAllClasses() {
   query2 += " WHERE ApexClassOrTriggerId IN (SELECT Id FROM ApexClass WHERE ManageableState = 'unmanaged') ORDER BY ApexClassOrTrigger.Name";
   var queryResult2 = performQuery(query2, toolingOption.option, toolingOption.baseUrl);
   
-  var coverageList = JSON.parse(queryResult2)
-                         .records
-                         .filter(function(it){ return testIdList.indexOf(it.ApexClassOrTriggerId) < 0; })
-                         .map(function(item) {
+  var coverageList = JSON.parse(queryResult2).
+                          records.
+                          filter(function(it){ return testIdList.indexOf(it.ApexClassOrTriggerId) < 0; }).
+                          map(function(item) {
                          
                            var total = item.NumLinesCovered + item.NumLinesUncovered;
                            var classInfo = notTestClassList[item.ApexClassOrTriggerId];
@@ -60,7 +60,12 @@ function getCoverageForAllClasses() {
                              classInfo.CreatedBy,
                              classInfo.LastModifiedBy
                           ];
+                       }).
+                       sort(function(a,b){
+                          return a[6].toUpperCase() > b[6].toUpperCase() ? 1 : -1;
                        });
+                       
+                       
     
   return { toContinue : true, records : coverageList};
 }
@@ -74,11 +79,17 @@ function getCoverageForAllTriggers() {
   var query1 = "SELECT Id, Name, CreatedBy.Name, LastModifiedBy.Name FROM ApexTrigger WHERE IsValid = true AND Status = 'Active'";
   var result1 = performQuery(query1, toolingOption.option, toolingOption.baseUrl);
   
+  Logger.log(result1);
+  
   var triggerInfoList = JSON.parse(result1)
                             .records
                             .reduce(function(accumulator, item){
-                              
-                                 accumulator[item.Id] = { Name : item.Name, CreatedBy : item.CreatedBy.Name, LastModifiedBy : item.LastModifiedBy.Name };
+                                 
+                                 accumulator[item.Id] = { 
+                                                          Name           : item.Name, 
+                                                          CreatedBy      : item.CreatedBy ? item.CreatedBy.Name : "", 
+                                                          LastModifiedBy : item.LastModifiedBy ? item.CreatedBy.Name : "" 
+                                 };
                                  return accumulator;
                                                              
                              }, {}); 
@@ -102,6 +113,9 @@ function getCoverageForAllTriggers() {
                              triggerInfo.CreatedBy,
                              triggerInfo.LastModifiedBy
                            ];
+                       }).
+                       sort(function(a,b){
+                          return a[6].toUpperCase() > b[6].toUpperCase() ? 1 : -1;
                        });
     
   return { toContinue : true, records : coverageList};
